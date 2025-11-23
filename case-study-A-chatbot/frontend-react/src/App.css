@@ -1,0 +1,264 @@
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f3f4f6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+}
+
+.app-header {
+  padding: 16px 24px;
+  background: #111827;
+  color: #f9fafb;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.app-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  gap: 12px;
+}
+
+.chat-window {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.chat-message {
+  margin-bottom: 12px;
+  display: flex;
+}
+
+.chat-message-user {
+  justify-content: flex-end;
+}
+
+.chat-message-bot,
+.chat-message-system {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 70%;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #e5e7eb;
+  color: #111827;
+  font-size: 14px;
+}
+
+.chat-message-user .chat-bubble {
+  background: #2563eb;
+  color: #f9fafb;
+}
+
+.chat-sender {
+  font-weight: 600;
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.chat-text {
+  white-space: pre-wrap;
+}
+
+.matches-section {
+  margin-top: 10px;
+}
+
+.matches-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.match-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+}
+
+.match-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.match-location {
+  margin: 2px 0 4px;
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.match-price {
+  margin: 2px 0;
+}
+
+.match-meta span {
+  margin-right: 8px;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.match-amenities {
+  margin: 4px 0;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.save-btn {
+  margin-top: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #10b981;
+  color: #ffffff;
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error-banner {
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.chat-input-row button {
+  padding: 0 16px;
+  border-radius: 999px;
+  border: none;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chat-input-row button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.loading-msg {
+  font-style: italic;
+  color: #666;
+  margin: 8px 0;
+}
+
+.error-banner {
+  background: #ffdddd;
+  color: #a80000;
+  border: 1px solid #ffb3b3;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.save-status-banner {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #ecfeff;
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.saved-properties-panel {
+  margin-top: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.saved-properties-panel h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.saved-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.saved-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.saved-property-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  background: #f9fafb;
+}
+
+.saved-title {
+  font-weight: 600;
+}
+
+.saved-location {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.saved-price {
+  margin: 2px 0;
+}
+
+.saved-meta span {
+  margin-right: 8px;
+  font-size: 11px;
+  color: #4b5563;
+}

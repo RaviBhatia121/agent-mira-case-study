@@ -1,0 +1,58 @@
+# ------------------------------
+# Node (backend + frontend)
+# ------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite build
+dist/
+.cache/
+.vite/
+
+# ------------------------------
+# Python (ML service)
+# ------------------------------
+venv/
+.env
+__pycache__/
+*.pyc
+
+# Model files (optional)
+model/*.pkl
+*.pickle
+
+# Logs
+*.log
+
+# ------------------------------
+# MacOS junk
+# ------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ------------------------------
+# VSCode & IDE
+# ------------------------------
+.vscode/
+.idea/
+*.iml
+
+# ------------------------------
+# Build outputs
+# ------------------------------
+build/
+out/
+coverage/
+
+# ------------------------------
+# Misc
+# ------------------------------
+*.tmp
+*.swp
+
+# Additional ignores (safe)
+repo-structure.txt

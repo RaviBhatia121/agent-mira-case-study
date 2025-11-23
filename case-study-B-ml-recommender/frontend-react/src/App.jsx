@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import "./App.css";
 
+// Backend base URL for Case B recommender.
+// In production we’ll set VITE_API_BASE via Render; locally it falls back to the current localhost URL.
+const API_BASE =
+  import.meta.env.VITE_API_BASE || "http://localhost:5001";
+
 const AVAILABLE_AREAS = [
   "Austin, TX",
   "Boston, MA",
@@ -54,7 +59,7 @@ function App() {
     setRecommendations([]);
 
     try {
-      const resp = await fetch("http://localhost:5001/recommendations", {
+      const resp = await fetch(`${API_BASE}/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

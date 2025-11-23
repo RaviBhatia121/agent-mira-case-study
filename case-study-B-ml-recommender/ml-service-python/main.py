@@ -83,120 +83,54 @@ class PredictionResponse(BaseModel):
 
 
 # -------------------------------------------------------------------
-# Model wrapper & loading logic
+# Model loading with resilient fallback
 # -------------------------------------------------------------------
 
-class PriceModel:
-    """
-    Simple heuristic-based pricing model.
+try:
+    with MODEL_PATH.open("rb") as f:
+        model = pickle.load(f)
+    print("Model loaded successfully.")
+except Exception as e:
+    print("⚠️ Failed to load model:", e)
+    print("➡️ Using fallback price model.")
 
-    Why this exists:
-    - The original `complex_price_model_v2.pkl` may contain a custom
-      Python class (e.g. `ComplexTrapModelRenamed`) that is not
-      available in this environment.
-    - Unpickling arbitrary classes is fragile and can be unsafe.
-    - For the case study, we want *deterministic* behaviour that shows
-      how the backend would integrate with *any* ML model.
+    class FallbackModel:
+        def predict(self, features):
+            """
+            Accepts either a single dict of features or a list/DF-like
+            structure with at least one row containing the expected keys.
+            """
+            # Normalize to a single dict
+            if isinstance(features, list):
+                if not features:
+                    return [0]
+                maybe_first = features[0]
+                if isinstance(maybe_first, dict):
+                    features = maybe_first
+                elif isinstance(maybe_first, (list, tuple)) and len(maybe_first) >= 6:
+                    # Ordered list fallback: [bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age]
+                    features = {
+                        "bedrooms": maybe_first[0],
+                        "bathrooms": maybe_first[1],
+                        "size_sqft": maybe_first[2],
+                        "school_rating": maybe_first[3],
+                        "commute_time": maybe_first[4],
+                        "property_age": maybe_first[5],
+                    }
+                else:
+                    features = {}
+            elif not isinstance(features, dict):
+                features = {}
 
-    So this wrapper acts as a stand-in model:
-    - We still reference the provided `.pkl` file (to show integration).
-    - We compute a price using a transparent heuristic.
-    """
+            price = (
+                200000
+                + features.get("bedrooms", 0) * 50000
+                + features.get("bathrooms", 0) * 30000
+                + features.get("size_sqft", 0) * 150
+            )
+            return [price]
 
-    def predict(self, X: List[List[float]]) -> List[float]:
-        """
-        Predict price for a batch of feature rows.
-
-        Each row is expected as:
-        [bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age]
-
-        The formula is intentionally simple but shaped like a real model:
-        - base price
-        - positive contribution of bedrooms / bathrooms / size / school_quality
-        - penalty for long commute and very old properties
-        """
-        prices: List[float] = []
-
-        for row in X:
-            if len(row) != 6:
-                raise ValueError(
-                    "Each feature row must have 6 values: "
-                    "[bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age]"
-                )
-
-            bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age = row
-
-            # Base price for any livable property
-            price = 200_000.0
-
-            # Bedrooms & bathrooms
-            price += bedrooms * 60_000.0
-            price += bathrooms * 40_000.0
-
-            # Size: every extra sqft adds value, but not linearly explosive
-            price += size_sqft * 120.0
-
-            # School quality: better schools add a premium
-            price += school_rating * 3_000.0
-
-            # Commute: shorter is better. After 45 mins we stop rewarding.
-            if commute_time < 45:
-                price += (45 - commute_time) * 1_000.0
-
-            # Age: newer properties are more expensive, but we cap the effect
-            if property_age < 30:
-                price += (30 - property_age) * 800.0
-
-            # Round to nearest hundred to look like realistic listing prices
-            rounded_price = round(price / 100.0) * 100.0
-            prices.append(rounded_price)
-
-        return prices
-
-
-def load_model():
-    """
-    Try to 'integrate' the provided pickle model.
-
-    What we do:
-    - Attempt to open the .pkl file to prove we know where it is located.
-    - If loading succeeds, we *still* wrap behaviour in PriceModel for safety.
-    - If loading fails, we fall back to PriceModel directly.
-
-    Why fallback logic exists:
-    - Unpickling third-party models can fail if the original class
-      definitions are missing.
-    - It can also be a security risk in untrusted environments.
-    - For this case study, the *interface* is more important than the
-      exact model weights, so we prefer a robust, explainable fallback.
-    """
-    try:
-        if MODEL_PATH.exists():
-            # We open and load the pickle to demonstrate integration,
-            # but we do not depend on its internal class structure.
-            with MODEL_PATH.open("rb") as f:
-                _ = pickle.load(f)
-
-            print("✅ Model file found and read successfully.")
-        else:
-            print(f"⚠️ Model file not found at {MODEL_PATH}. Using heuristic model only.")
-
-        # In both success/failure above we return a safe, deterministic wrapper.
-        model = PriceModel()
-        print("✅ Model loaded successfully (placeholder heuristic active).")
-        return model
-
-    except Exception as exc:
-        # If anything goes wrong, we still serve predictions using the heuristic model.
-        print(
-            f"⚠️ Error loading pickled model from {MODEL_PATH}: {exc}. "
-            "Falling back to heuristic PriceModel."
-        )
-        return PriceModel()
-
-
-# Global model instance used by the /predict endpoint
-model = load_model()
+    model = FallbackModel()
 
 
 # -------------------------------------------------------------------
@@ -232,16 +166,16 @@ def predict_price(payload: PredictionRequest):
     and let the Node.js side decide how to degrade gracefully.
     """
     try:
-        features_row = [
-            payload.bedrooms,
-            payload.bathrooms,
-            float(payload.size_sqft),
-            float(payload.school_rating),
-            float(payload.commute_time),
-            float(payload.property_age),
-        ]
+        features_dict = {
+            "bedrooms": payload.bedrooms,
+            "bathrooms": payload.bathrooms,
+            "size_sqft": float(payload.size_sqft),
+            "school_rating": float(payload.school_rating),
+            "commute_time": float(payload.commute_time),
+            "property_age": float(payload.property_age),
+        }
 
-        predicted_list = model.predict([features_row])
+        predicted_list = model.predict(features_dict)
         if not predicted_list:
             raise RuntimeError("Model returned no predictions.")
 
@@ -249,7 +183,7 @@ def predict_price(payload: PredictionRequest):
 
         return PredictionResponse(
             predicted_price=predicted_price,
-            input_features=payload.dict(),
+            input_features=features_dict,
         )
 
     except HTTPException:

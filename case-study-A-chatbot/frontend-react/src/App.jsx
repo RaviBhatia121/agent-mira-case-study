@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
 
-const API_BASE = "http://localhost:5002";
+// Backend base URL: configurable via VITE_API_BASE (Render/Netlify), defaults to local dev server.
+const API_BASE =
+  import.meta.env.VITE_API_BASE || "http://localhost:5002";
 
 const formatPrice = (value) => {
   if (value == null || isNaN(value)) return "N/A";

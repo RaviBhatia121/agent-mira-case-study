@@ -38,6 +38,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Stub class so pickle can resolve this type when loading the provided model
+class ComplexTrapModelRenamed:
+    """Stub class so pickle can resolve this type; real attributes are loaded from the .pkl file."""
+    pass
+
 
 # -------------------------------------------------------------------
 # Pydantic models – request & response schema

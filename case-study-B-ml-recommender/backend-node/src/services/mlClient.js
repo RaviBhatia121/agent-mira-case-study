@@ -8,9 +8,10 @@
 
 const axios = require("axios");
 
-// ML service endpoint (can be overridden via env variable)
-const ML_SERVICE_URL =
-  process.env.ML_SERVICE_URL || "http://localhost:8000/predict";
+// Base URL for the ML service (can be overridden via env variable)
+// In Render we’ll set ML_SERVICE_URL to https://agent-mira-case-b-ml.onrender.com
+// For local dev, it falls back to localhost.
+const ML_BASE_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
 
 /**
  * Call the ML service for a single property and return predicted_price.
@@ -28,7 +29,7 @@ async function getPredictedPriceForProperty(property) {
       property_age: property.property_age,
     };
 
-    const response = await axios.post(ML_SERVICE_URL, payload, {
+    const response = await axios.post(`${ML_BASE_URL}/score`, payload, {
       timeout: 2000, // ms – avoid hanging if ML service is down
     });
 

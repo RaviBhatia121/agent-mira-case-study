@@ -1,8 +1,8 @@
 // src/server.js
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
 const { loadPropertyDatasets } = require('../../../common/utils/dataLoader');
 const {
   joinPropertyData,
@@ -29,7 +29,13 @@ const { BACKEND_PORT } = require('./config');
 const app = express();
 
 // ---------- Middleware ----------
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 app.use(express.json());
 
 // ---------- Load data once in memory ----------

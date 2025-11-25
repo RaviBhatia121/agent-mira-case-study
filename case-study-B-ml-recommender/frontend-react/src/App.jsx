@@ -333,11 +333,6 @@ function App() {
                     ? "Using rule-based scores only; detailed ML explanation not available."
                     : prop.reasoning || "Reasoning not available for this property."}
                 </p>
-                {prop.reasoning && (
-                  <p className="match-reasoning-text">
-                    {prop.reasoning}
-                  </p>
-                )}
                 {prop.isFallbackSuggestion && (
                   <p className="match-reasoning-fallback">
                     This property is a secondary recommendation because fewer ML matches were

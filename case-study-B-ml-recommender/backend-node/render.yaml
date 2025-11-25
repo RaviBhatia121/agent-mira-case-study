@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: agent-mira-backend
+    env: node
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ML_SERVICE_URL
+        fromService:
+          name: agent-mira-ml-service
+          type: web
+          property: url

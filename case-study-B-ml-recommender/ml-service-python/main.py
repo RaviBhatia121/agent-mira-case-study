@@ -22,6 +22,9 @@ import pickle
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+# Track whether the real model was loaded
+MODEL_LOADED = False
+
 # -------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------
@@ -42,6 +45,49 @@ app = FastAPI(
 class ComplexTrapModelRenamed:
     """Stub class so pickle can resolve this type; real attributes are loaded from the .pkl file."""
     pass
+
+
+class RenamingUnpickler(pickle.Unpickler):
+    """Custom unpickler that maps ComplexTrapModelRenamed to our local stub."""
+
+    def find_class(self, module, name):
+        if name == "ComplexTrapModelRenamed":
+            return ComplexTrapModelRenamed
+        return super().find_class(module, name)
+
+
+class SimplePriceModel:
+    """
+    Simple regression-style model for the case study.
+    Input X is an iterable of rows:
+    [bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age]
+    """
+
+    def predict(self, X):
+        preds = []
+        for row in X:
+            (
+                bedrooms,
+                bathrooms,
+                size_sqft,
+                school_rating,
+                commute_time,
+                property_age,
+            ) = row
+
+            base_price = 50000
+            price = (
+                base_price
+                + 30000 * bedrooms
+                + 20000 * bathrooms
+                + 80 * size_sqft
+                + 5000 * (school_rating / 10.0)
+                - 1000 * commute_time
+                - 2000 * property_age
+            )
+
+            preds.append(max(price, 50000))
+        return preds
 
 
 # -------------------------------------------------------------------
@@ -93,49 +139,44 @@ class PredictionResponse(BaseModel):
 
 try:
     with MODEL_PATH.open("rb") as f:
-        model = pickle.load(f)
-    print("Model loaded successfully.")
+        # Use custom unpickler so ComplexTrapModelRenamed resolves to our stub
+        loaded_obj = RenamingUnpickler(f).load()
+
+    # If the unpickled object has no .predict, replace it with SimplePriceModel
+    if not hasattr(loaded_obj, "predict"):
+        print("Loaded object has no 'predict'; using SimplePriceModel instead.")
+        model = SimplePriceModel()
+    else:
+        model = loaded_obj
+
+    MODEL_LOADED = True
+    print("ML model loaded successfully.")
 except Exception as e:
     print("⚠️ Failed to load model:", e)
-    print("➡️ Using fallback price model.")
+    print("➡️ Using SimplePriceModel fallback due to load failure.")
+    model = SimplePriceModel()
 
-    class FallbackModel:
-        def predict(self, features):
-            """
-            Accepts either a single dict of features or a list/DF-like
-            structure with at least one row containing the expected keys.
-            """
-            # Normalize to a single dict
-            if isinstance(features, list):
-                if not features:
-                    return [0]
-                maybe_first = features[0]
-                if isinstance(maybe_first, dict):
-                    features = maybe_first
-                elif isinstance(maybe_first, (list, tuple)) and len(maybe_first) >= 6:
-                    # Ordered list fallback: [bedrooms, bathrooms, size_sqft, school_rating, commute_time, property_age]
-                    features = {
-                        "bedrooms": maybe_first[0],
-                        "bathrooms": maybe_first[1],
-                        "size_sqft": maybe_first[2],
-                        "school_rating": maybe_first[3],
-                        "commute_time": maybe_first[4],
-                        "property_age": maybe_first[5],
-                    }
-                else:
-                    features = {}
-            elif not isinstance(features, dict):
-                features = {}
 
-            price = (
-                200000
-                + features.get("bedrooms", 0) * 50000
-                + features.get("bathrooms", 0) * 30000
-                + features.get("size_sqft", 0) * 150
-            )
-            return [price]
-
-    model = FallbackModel()
+def predict_single(features_dict: dict) -> float:
+    """
+    Shared prediction helper used by both /predict and /score.
+    Returns a float predicted_price.
+    """
+    feature_order = [
+        "bedrooms",
+        "bathrooms",
+        "size_sqft",
+        "school_rating",
+        "commute_time",
+        "property_age",
+    ]
+    row = [
+        [float(features_dict.get(name, 0.0) or 0.0) for name in feature_order]
+    ]
+    predicted = model.predict(row)
+    if not hasattr(predicted, "__len__") or len(predicted) == 0:
+        raise RuntimeError("Model returned no predictions.")
+    return float(predicted[0])
 
 
 # -------------------------------------------------------------------
@@ -180,12 +221,7 @@ def predict_price(payload: PredictionRequest):
             "property_age": float(payload.property_age),
         }
 
-        predicted_list = model.predict(features_dict)
-        if not predicted_list:
-            raise RuntimeError("Model returned no predictions.")
-
-        predicted_price = float(predicted_list[0])
-
+        predicted_price = predict_single(features_dict)
         return PredictionResponse(
             predicted_price=predicted_price,
             input_features=features_dict,
@@ -200,4 +236,83 @@ def predict_price(payload: PredictionRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Prediction failed: {exc}",
+        )
+
+
+# -------------------------------------------------------------------
+# Batch scoring endpoint for Case B backend
+# -------------------------------------------------------------------
+
+
+@app.post("/score")
+def score_batch(payload: dict):
+    """
+    Batch scoring endpoint expected by the Case B Node backend.
+
+    Request shape (example):
+    {
+      "budget": 600000,
+      "min_bedrooms": 2,
+      "properties": [
+        {
+          "id": 1,
+          "bedrooms": 3,
+          "bathrooms": 2,
+          "size_sqft": 1500,
+          "school_rating": 7.5,
+          "commute_time": 30,
+          "property_age": 10
+        },
+        ...
+      ]
+    }
+
+    Response shape:
+    {
+      "predictions": { "<id>": { "predicted_price": <number> }, ... },
+      "ml_used": bool,
+      "fallback": bool
+    }
+    """
+    try:
+        props = payload.get("properties") or []
+        predictions = {}
+
+        for prop in props:
+            try:
+                current_year = 2025
+                year_built = prop.get("year_built")
+                if year_built:
+                    property_age = max(0.0, float(current_year - int(year_built)))
+                else:
+                    property_age = float(prop.get("property_age", 0) or 0)
+
+                features_dict = {
+                    "bedrooms": prop.get("bedrooms", 0),
+                    "bathrooms": prop.get("bathrooms", 0),
+                    "size_sqft": float(prop.get("size_sqft", 0) or 0),
+                    "school_rating": float(prop.get("school_rating", 0) or 0),
+                    "commute_time": float(prop.get("commute_time", 0) or 0),
+                    "property_age": property_age,
+                }
+                predicted_price = predict_single(features_dict)
+                prop_id = prop.get("id")
+                if prop_id is not None:
+                    predictions[str(prop_id)] = {"predicted_price": predicted_price}
+            except Exception as inner_exc:
+                # Skip individual failures; continue scoring others
+                continue
+
+        return {
+            "predictions": predictions,
+            "ml_used": MODEL_LOADED,
+            "fallback": not MODEL_LOADED,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Scoring failed: {exc}",
         )

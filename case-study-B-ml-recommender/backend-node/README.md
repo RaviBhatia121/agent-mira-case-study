@@ -19,6 +19,16 @@ cd case-study-B-ml-recommender/backend-node
 npm install
 npm start   # or node src/server.js
 
+## Environment variables
+
+Local development:
+- `PORT` (default: 5001)
+- `ML_SERVICE_URL` (default: `http://localhost:8000`)
+
+Render:
+- `PORT` is set automatically by Render.
+- Set `ML_SERVICE_URL` to the deployed ML service base URL, e.g. `https://<your-ml-service>.onrender.com`. The backend will normalize this and call the `/score` endpoint.
+
 Structure:
 - `/src/server.js` – main service
 - `/src/services/mlClient.js` – ML API client

@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import "./App.css";
 
 // Backend base URL for Case B recommender.
-// In production we’ll set VITE_API_BASE via Render; locally it falls back to the current localhost URL.
+// Controlled via VITE_BACKEND_BASE (Render/local); defaults to local backend.
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "http://localhost:5001";
+  import.meta.env.VITE_BACKEND_BASE || "http://localhost:5001";
 
 const AVAILABLE_AREAS = [
   "Austin, TX",
@@ -333,6 +333,11 @@ function App() {
                     ? "Using rule-based scores only; detailed ML explanation not available."
                     : prop.reasoning || "Reasoning not available for this property."}
                 </p>
+                {prop.reasoning && (
+                  <p className="match-reasoning-text">
+                    {prop.reasoning}
+                  </p>
+                )}
                 {prop.isFallbackSuggestion && (
                   <p className="match-reasoning-fallback">
                     This property is a secondary recommendation because fewer ML matches were
@@ -340,6 +345,13 @@ function App() {
                   </p>
                 )}
               </div>
+
+              {prop.ml_reasoning && (
+                <div className="ml-reasoning">
+                  <strong>Why the ML model thinks this works:</strong>
+                  <p>{prop.ml_reasoning}</p>
+                </div>
+              )}
 
               {prop.scores && (
                 <details className="score-breakdown">

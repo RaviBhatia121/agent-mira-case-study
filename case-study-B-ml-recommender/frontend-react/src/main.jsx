@@ -9,11 +9,13 @@ import "./index.css";
 function Root() {
   const [availableAreas, setAvailableAreas] = useState([]);
   const [hasFetched, setHasFetched] = useState(false);
+  const API_BASE =
+    import.meta.env.VITE_BACKEND_BASE || "http://localhost:5001";
 
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const res = await fetch("http://localhost:5001/areas");
+        const res = await fetch(`${API_BASE}/areas`);
         if (!res.ok) {
           throw new Error(`Failed to load areas: ${res.status}`);
         }

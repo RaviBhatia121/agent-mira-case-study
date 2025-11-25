@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: agent-mira-frontend
+    env: node
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s dist
+    envVars:
+      - key: VITE_BACKEND_BASE
+        fromService:
+          name: agent-mira-backend
+          type: web
+          property: url

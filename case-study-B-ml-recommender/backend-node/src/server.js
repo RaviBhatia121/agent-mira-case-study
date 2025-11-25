@@ -24,8 +24,9 @@ const {
   getMlScoresForProperties,
 } = require('./services/mlClient');
 
+const { BACKEND_PORT } = require('./config');
+
 const app = express();
-const PORT = process.env.PORT || 5001;
 
 // ---------- Middleware ----------
 app.use(cors());
@@ -207,15 +208,21 @@ app.post('/recommendations', async (req, res) => {
   let mlAnyPrediction = false;
   let mlFallbackMessage = null;
   let mlScoreById = {};
+  let mlUsedFlag = false;
+  let mlServiceFallback = false;
 
   if (propertiesForML.length > 0) {
     try {
-      const { scoresById, anyPrediction } = await getMlScoresForProperties(propertiesForML);
+      const { scoresById, anyPrediction, mlUsed, fallback } =
+        await getMlScoresForProperties(propertiesForML);
       mlScoreById = scoresById || {};
-      mlAnyPrediction = Boolean(anyPrediction) && Object.keys(mlScoreById).length > 0;
+      mlAnyPrediction =
+        Boolean(anyPrediction) && Object.keys(mlScoreById).length > 0;
+      mlUsedFlag = Boolean(mlUsed);
+      mlServiceFallback = Boolean(fallback);
       mlCallSucceeded = true;
       console.log(
-        `[ML] Received predictions for ${Object.keys(mlScoreById).length} properties`
+        `[ML] Received predictions for ${Object.keys(mlScoreById).length} properties (mlUsed=${mlUsedFlag}, fallback=${mlServiceFallback})`
       );
     } catch (err) {
       console.error('Error calling ML service:', err.message);
@@ -231,7 +238,8 @@ app.post('/recommendations', async (req, res) => {
   const budget = preferences.budget;
 
   const enriched = properties.map((p) => {
-    const mlEntry = mlScoreById[p.id];
+    const key = String(p.id);
+    const mlEntry = mlScoreById[key] ?? mlScoreById[p.id];
     const predictedPrice =
       mlEntry && typeof mlEntry.predicted_price === 'number'
         ? mlEntry.predicted_price
@@ -340,8 +348,8 @@ app.post('/recommendations', async (req, res) => {
   // --- end cap ---
 
   const responsePayload = {
-    ml_used: mlCallSucceeded && mlAnyPrediction,
-    ml_fallback_detected: !!mlFallbackMessage,
+    ml_used: mlCallSucceeded && mlAnyPrediction && mlUsedFlag && !mlServiceFallback,
+    ml_fallback_detected: !!mlFallbackMessage || mlServiceFallback || !mlUsedFlag,
     ml_fallback_message: mlFallbackMessage,
     diagnostics: {
       total_properties: totalProperties,
@@ -354,6 +362,6 @@ app.post('/recommendations', async (req, res) => {
 });
 
 // ---------- Start server ----------
-app.listen(PORT, () => {
-  console.log(`ML recommender backend listening on port ${PORT}`);
+app.listen(BACKEND_PORT, () => {
+  console.log(`ML recommender backend listening on port ${BACKEND_PORT}`);
 });

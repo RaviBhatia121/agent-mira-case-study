@@ -3,6 +3,9 @@
 ## 1. Overview
 Agent Mira Case A is a lightweight real estate chatbot. It accepts natural-language queries (budget, bedrooms, preferred locations), runs them through a small NLP layer, filters properties using the shared utilities from Case B, and returns the top matches. It supports saving properties to MongoDB (Atlas), with graceful fallback when persistence is disabled.
 
+### Architecture Overview
+3 JSON sources → Node backend (merge/filter) → React chatbot UI → MongoDB for saved properties.
+
 ## 2. Features
 - Chatbot UI (React) with chat transcript and property cards
 - NLP parsing for budget, bedrooms (BHK), and locations (compromise + regex)
@@ -41,13 +44,23 @@ Agent Mira Case A is a lightweight real estate chatbot. It accepts natural-langu
 4. Start backend (port 5002):
    ```bash
    npm run dev     # or npm start
-   ```
+  ```
 5. Frontend setup:
-   ```bash
-   cd ../frontend-react
-   npm install
-   npm run dev     # Vite (defaults to 5173; may auto-pick 5174 if busy)
-   ```
+  ```bash
+  cd ../frontend-react
+  npm install
+  npm run dev     # Vite (defaults to 5173; may auto-pick 5174 if busy)
+  ```
+
+### How to Run Locally
+- Backend:
+  - Copy `backend-node/.env.example` to `backend-node/.env` and set `MONGODB_URI` (Atlas URI) and `PORT=5002` (default).
+  - Start: `cd case-study-A-chatbot/backend-node && npm install && npm run dev`
+- Frontend:
+  - Copy `frontend-react/.env.example` to `frontend-react/.env` and set `VITE_API_BASE` (defaults to `http://localhost:5002`).
+  - Start: `cd case-study-A-chatbot/frontend-react && npm install && npm run dev`
+- Saving a property:
+  - Click “Save” in the UI; it calls `POST /save-property` with `userId=demo` and the property id. When `MONGODB_URI` is valid, the document is persisted; otherwise the API responds with `persistenceEnabled: false`.
 
 ## 6. Running Locally
 - **Backend (from `case-study-A-chatbot/backend-node`):**
@@ -96,7 +109,15 @@ Agent Mira Case A is a lightweight real estate chatbot. It accepts natural-langu
   - createdAt: Date (default now)
 
 ## 9. Deployment Notes (placeholder)
+- Deployed URL: <add-frontend-url-here>
 - Deployment instructions to be added (e.g., Atlas + hosted frontend).
 
 ## 10. Screenshots (placeholder)
 - Add UI screenshots when ready.
+
+## Approach & Challenges
+- Reused Case B data and utilities to minimize duplication (loader, joiner, filters, scoring).
+- Lightweight NLP (compromise + regex) to parse budgets, bedrooms, and locations from free text.
+- MongoDB persistence is optional; the API degrades gracefully when `MONGODB_URI` is missing.
+- Chat responses blend parsed intent with top-scoring properties for a simple conversational flow.
+- Clear separation: backend merges/filters data; frontend renders chat + property cards.

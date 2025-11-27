@@ -161,6 +161,18 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'ml-recommender-backend' });
 });
 
+// List available areas (deduplicated from property data)
+app.get('/areas', (req, res) => {
+  const areas = Array.from(
+    new Set(
+      (fullProperties || [])
+        .map((p) => p.location || [p.city, p.state].filter(Boolean).join(', '))
+        .filter((v) => typeof v === 'string' && v.trim().length > 0)
+    )
+  );
+  res.json({ areas });
+});
+
 // Return all properties (merged view)
 app.get('/properties', (req, res) => {
   res.json({ properties: fullProperties });

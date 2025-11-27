@@ -1,11 +1,9 @@
 services:
-  - type: web
+  - type: static
     name: agent-mira-frontend
-    env: node
-    region: singapore
-    rootDir: .
-    buildCommand: cd case-study-B-ml-recommender/frontend-react && npm install && npm run build
-    startCommand: cd case-study-B-ml-recommender/frontend-react && npx serve -s dist -l $PORT
+    rootDir: case-study-B-ml-recommender/frontend-react
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_BACKEND_BASE
         fromService:

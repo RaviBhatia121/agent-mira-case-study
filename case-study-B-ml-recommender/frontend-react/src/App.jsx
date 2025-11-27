@@ -5,6 +5,7 @@ import "./App.css";
 // Controlled via VITE_BACKEND_BASE (Render/local); defaults to local backend.
 const API_BASE =
   import.meta.env.VITE_BACKEND_BASE || "http://localhost:5001";
+console.log("🟩 FRONTEND API_BASE =", API_BASE);
 
 const AVAILABLE_AREAS = [
   "Austin, TX",
@@ -59,6 +60,7 @@ function App() {
     setRecommendations([]);
 
     try {
+      console.log("🟩 Calling recommendations API:", `${API_BASE}/recommendations`);
       const resp = await fetch(`${API_BASE}/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

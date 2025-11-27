@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import "./App.css";
 
 // Backend base URL for Case B recommender.
-// Hard-coded to Render backend for reliability in Case B.
-const API_BASE = "https://agent-mira-case-b-backend.onrender.com";
+// Backend base URL for Case B recommender.
+// Controlled via VITE_BACKEND_BASE (Render/local); defaults to local backend.
+const API_BASE =
+  import.meta.env.VITE_BACKEND_BASE || "http://localhost:5001";
 console.log("🟩 FRONTEND API_BASE =", API_BASE);
 
 const AVAILABLE_AREAS = [

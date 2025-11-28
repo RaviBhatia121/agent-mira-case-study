@@ -255,6 +255,7 @@ app.post('/recommendations', async (req, res) => {
   // If ML call succeeded but came back completely empty/invalid, treat as fallback
   if (mlCallSucceeded && !mlAnyPrediction && !mlFallbackMessage) {
     mlFallbackMessage = 'Remote ML service responded without usable predictions; using rule-based scoring only.';
+    console.log("ML returned no predictions, using rule-only fallback.");
   }
 
   const budget = preferences.budget;

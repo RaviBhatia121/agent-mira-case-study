@@ -62,6 +62,10 @@ Agent Mira Case A is a lightweight real estate chatbot. It accepts natural-langu
 - Saving a property:
   - Click “Save” in the UI; it calls `POST /save-property` with `userId=demo` and the property id. When `MONGODB_URI` is valid, the document is persisted; otherwise the API responds with `persistenceEnabled: false`.
 
+## Live Deployment
+- Frontend: https://agent-mira-case-a-frontend.onrender.com
+- Backend: https://agent-mira-case-a-backend.onrender.com
+
 ## 6. Running Locally
 - **Backend (from `case-study-A-chatbot/backend-node`):**
   ```bash

@@ -24,6 +24,7 @@ The goal is to show:
 - **Backend:** Node.js + Express (`case-study-A-chatbot/backend-node`)
 - **Frontend:** React + Vite (`case-study-A-chatbot/frontend-react`)
 - **Database:** MongoDB Atlas (for saved properties), via **Mongoose**
+- **Live Demo:** Frontend https://agent-mira-case-a-frontend.onrender.com · Backend https://agent-mira-case-a-backend.onrender.com
 
 ### Case Study B (ML Recommender)
 - **ML Service:** Python + FastAPI (`case-study-B-ml-recommender/ml-service-python`)

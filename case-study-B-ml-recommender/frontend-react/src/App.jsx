@@ -276,8 +276,7 @@ function App() {
 
           {!loading && !error && recommendations.length === 0 && (
             <p className="muted">
-              No recommendations yet. Fill the form and click
-              {" “Get Recommendations”. "}
+              No recommendations yet. Enter your budget and preferences, then click ‘Find homes’ to see matches.
             </p>
           )}
 

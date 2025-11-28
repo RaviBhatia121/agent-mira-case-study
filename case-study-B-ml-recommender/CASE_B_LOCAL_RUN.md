@@ -13,21 +13,24 @@ This project runs in three parts: ML service (Python), backend (Node), frontend 
 
 ## Local Run (three terminals)
 
-### 1) Start ML service (port 8000)
-```bash
-cd case-study-B-ml-recommender/ml-service-python
-uvicorn main:app --reload --port 8000
-```
+### 1. Start the ML service (Python)
 
-### 2) Start backend (port 5001 by default)
-```bash
+cd case-study-B-ml-recommender/ml-service-python
+source venv/bin/activate   # if using venv
+uvicorn main:app --reload --port 8000
+
+# ML is now available at:
+# http://localhost:8000
+
+### 2. Start the Node backend
+
 cd case-study-B-ml-recommender/backend-node
-cp .env.example .env  # or .env.local
-# ensure ML_SERVICE_URL=http://localhost:8000 and PORT=5001
+export ML_SERVICE_URL=http://localhost:8000
 npm install
 npm run dev
-```
-Expected log: “ML recommender backend listening on port 5001”. You may see ML DEBUG logs indicating predictions count.
+
+# Backend listens on http://localhost:5001
+# It calls the ML service using ML_SERVICE_URL/score
 
 ### 3) Start frontend (Vite, port 5173/5174)
 ```bash
@@ -66,5 +69,10 @@ Passing indicators:
 - Frontend:
   - Build: `npm run build`
   - Env: `VITE_BACKEND_BASE=https://<your-backend>.onrender.com`
+  - In production, the Case B frontend calls the backend at https://agent-mira-case-b-backend.onrender.com (URL currently configured in the frontend).
 
 See `.env.example` in each service directory for ready-to-copy values.
+
+> ⚠️ IMPORTANT: The backend defaults to ML_SERVICE_URL=http://localhost:8000.
+> If you run the ML service on ANY other port, you must export ML_SERVICE_URL accordingly,
+> or the backend will fall back to rule-only scoring.
